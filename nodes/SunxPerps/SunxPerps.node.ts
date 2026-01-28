@@ -302,8 +302,8 @@ export class SunxPerps implements INodeType {
 				description: 'The contract code (e.g., BTC-USDT)',
 			},
 			{
-				displayName: 'Direction',
-				name: 'direction',
+				displayName: 'Side',
+				name: 'side',
 				type: 'options',
 				required: true,
 				displayOptions: {
@@ -323,35 +323,11 @@ export class SunxPerps implements INodeType {
 					},
 				],
 				default: 'buy',
-				description: 'Order direction',
+				description: 'Order side',
 			},
 			{
-				displayName: 'Offset',
-				name: 'offset',
-				type: 'options',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['order'],
-						operation: ['placeOrder'],
-					},
-				},
-				options: [
-					{
-						name: 'Open',
-						value: 'open',
-					},
-					{
-						name: 'Close',
-						value: 'close',
-					},
-				],
-				default: 'open',
-				description: 'Open or close position',
-			},
-			{
-				displayName: 'Order Price Type',
-				name: 'orderPriceType',
+				displayName: 'Type',
+				name: 'type',
 				type: 'options',
 				required: true,
 				displayOptions: {
@@ -373,17 +349,9 @@ export class SunxPerps implements INodeType {
 						name: 'Post Only',
 						value: 'post_only',
 					},
-					{
-						name: 'FOK',
-						value: 'fok',
-					},
-					{
-						name: 'IOC',
-						value: 'ioc',
-					},
 				],
 				default: 'limit',
-				description: 'Order price type',
+				description: 'Order type',
 			},
 			{
 				displayName: 'Volume',
@@ -407,24 +375,61 @@ export class SunxPerps implements INodeType {
 					show: {
 						resource: ['order'],
 						operation: ['placeOrder'],
-						orderPriceType: ['limit', 'post_only'],
+						type: ['limit', 'post_only'],
 					},
 				},
 				default: 0,
 				description: 'Order price (required for limit orders)',
 			},
 			{
-				displayName: 'Leverage Rate',
-				name: 'leverageRate',
-				type: 'number',
+				displayName: 'Margin Mode',
+				name: 'marginMode',
+				type: 'options',
 				displayOptions: {
 					show: {
 						resource: ['order'],
 						operation: ['placeOrder'],
 					},
 				},
-				default: 10,
-				description: 'Leverage rate (e.g., 10 for 10x)',
+				options: [
+					{
+						name: 'Cross',
+						value: 'cross',
+					},
+					{
+						name: 'Isolated',
+						value: 'isolated',
+					},
+				],
+				default: 'cross',
+				description: 'Margin mode',
+			},
+			{
+				displayName: 'Position Side',
+				name: 'positionSide',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: ['order'],
+						operation: ['placeOrder'],
+					},
+				},
+				options: [
+					{
+						name: 'Both (One-way)',
+						value: 'both',
+					},
+					{
+						name: 'Long',
+						value: 'long',
+					},
+					{
+						name: 'Short',
+						value: 'short',
+					},
+				],
+				default: 'both',
+				description: 'Position side',
 			},
 			{
 				displayName: 'Client Order ID',
@@ -454,10 +459,24 @@ export class SunxPerps implements INodeType {
 				},
 				default: '[]',
 				description: 'Array of orders in JSON format',
-				placeholder: '[{"contract_code":"BTC-USDT","direction":"buy","offset":"open","order_price_type":"limit","volume":1,"price":50000}]',
+				placeholder: '[{"contract_code":"BTC-USDT","margin_mode":"cross","position_side":"both","side":"buy","type":"limit","volume":"1","price":"50000"}]',
 			},
 
 			// Order Fields - Cancel Order
+			{
+				displayName: 'Contract Code',
+				name: 'contractCode',
+				type: 'string',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['order'],
+						operation: ['cancelOrder'],
+					},
+				},
+				default: 'BTC-USDT',
+				description: 'Contract code',
+			},
 			{
 				displayName: 'Order ID',
 				name: 'orderId',
@@ -472,21 +491,22 @@ export class SunxPerps implements INodeType {
 				default: '',
 				description: 'Order ID to cancel or get info',
 			},
+
+			// Order Fields - Cancel Multiple Orders
 			{
 				displayName: 'Contract Code',
 				name: 'contractCode',
 				type: 'string',
+				required: true,
 				displayOptions: {
 					show: {
 						resource: ['order'],
-						operation: ['cancelOrder', 'getOrderInfo'],
+						operation: ['cancelMultipleOrders'],
 					},
 				},
-				default: '',
-				description: 'Contract code (optional)',
+				default: 'BTC-USDT',
+				description: 'Contract code (required)',
 			},
-
-			// Order Fields - Cancel Multiple Orders
 			{
 				displayName: 'Order IDs',
 				name: 'orderIds',
@@ -502,7 +522,7 @@ export class SunxPerps implements INodeType {
 				description: 'Comma-separated list of order IDs',
 			},
 
-			// Order Fields - Cancel All / Close All
+			// Order Fields - Cancel All Orders
 			{
 				displayName: 'Contract Code',
 				name: 'contractCode',
@@ -510,34 +530,77 @@ export class SunxPerps implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['order'],
-						operation: ['cancelAllOrders', 'closeSymbolAtMarket'],
+						operation: ['cancelAllOrders'],
 					},
 				},
 				default: '',
-				description: 'Contract code (optional for cancel all, required for close symbol)',
+				description: 'Contract code (optional - leave empty to cancel all)',
+			},
+
+			// Order Fields - Close Symbol
+			{
+				displayName: 'Contract Code',
+				name: 'contractCode',
+				type: 'string',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['order'],
+						operation: ['closeSymbolAtMarket'],
+					},
+				},
+				default: 'BTC-USDT',
+				description: 'Contract code',
 			},
 			{
-				displayName: 'Direction',
-				name: 'direction',
+				displayName: 'Margin Mode',
+				name: 'marginMode',
 				type: 'options',
 				displayOptions: {
 					show: {
 						resource: ['order'],
-						operation: ['closeSymbolAtMarket', 'closeAllAtMarket'],
+						operation: ['closeSymbolAtMarket'],
 					},
 				},
 				options: [
 					{
-						name: 'Buy',
-						value: 'buy',
+						name: 'Cross',
+						value: 'cross',
 					},
 					{
-						name: 'Sell',
-						value: 'sell',
+						name: 'Isolated',
+						value: 'isolated',
 					},
 				],
-				default: 'buy',
-				description: 'Direction to close',
+				default: 'cross',
+				description: 'Margin mode',
+			},
+			{
+				displayName: 'Position Side',
+				name: 'positionSide',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: ['order'],
+						operation: ['closeSymbolAtMarket'],
+					},
+				},
+				options: [
+					{
+						name: 'Both',
+						value: 'both',
+					},
+					{
+						name: 'Long',
+						value: 'long',
+					},
+					{
+						name: 'Short',
+						value: 'short',
+					},
+				],
+				default: 'both',
+				description: 'Position side',
 			},
 
 			// Order Fields - Get Current Orders / Order History
@@ -548,11 +611,11 @@ export class SunxPerps implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['order'],
-						operation: ['getCurrentOrders', 'getOrderHistory'],
+						operation: ['getCurrentOrders', 'getOrderHistory', 'getOrderInfo'],
 					},
 				},
 				default: '',
-				description: 'Contract code (optional)',
+				description: 'Contract code (optional for list, required for getOrderInfo)',
 			},
 			{
 				displayName: 'Page Index',
@@ -622,11 +685,11 @@ export class SunxPerps implements INodeType {
 				},
 				options: [
 					{
-						name: 'Dual Side',
+						name: 'Dual Side (Hedge)',
 						value: 'dual_side',
 					},
 					{
-						name: 'Single Side',
+						name: 'Single Side (One-way)',
 						value: 'single_side',
 					},
 				],
@@ -715,7 +778,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/account/financial_record',
+							'/sapi/v1/trade/account/financial_record',
 							undefined,
 							qs,
 						);
@@ -735,7 +798,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxPublicApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/public/swap_fee',
+							'/sapi/v1/trade/swap_fee',
 							{ contract_code: contractCode },
 						);
 					} else if (operation === 'getFundingRate') {
@@ -751,7 +814,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxPublicApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/public/historical_funding_rate',
+							'/sapi/v1/trade/historical_funding_rate',
 							{ contract_code: contractCode },
 						);
 					} else if (operation === 'getLeverageInfo') {
@@ -766,7 +829,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxPublicApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/public/cross_transfer_info',
+							'/sapi/v1/trade/cross_transfer_info',
 						);
 					} else if (operation === 'getSwapIndexPrice') {
 						const contractCode = this.getNodeParameter('contractCode', i) as string;
@@ -779,29 +842,29 @@ export class SunxPerps implements INodeType {
 					}
 				}
 
-				// ORDER OPERATIONS
+				// ORDER OPERATIONS - ALL USE /sapi/v1/trade/*
 				else if (resource === 'order') {
 					if (operation === 'placeOrder') {
 						const contractCode = this.getNodeParameter('contractCode', i) as string;
-						const direction = this.getNodeParameter('direction', i) as string;
-						const offset = this.getNodeParameter('offset', i) as string;
-						const orderPriceType = this.getNodeParameter('orderPriceType', i) as string;
+						const side = this.getNodeParameter('side', i) as string;
+						const type = this.getNodeParameter('type', i) as string;
 						const volume = this.getNodeParameter('volume', i) as number;
 						const price = this.getNodeParameter('price', i, 0) as number;
-						const leverageRate = this.getNodeParameter('leverageRate', i, 10) as number;
+						const marginMode = this.getNodeParameter('marginMode', i, 'cross') as string;
+						const positionSide = this.getNodeParameter('positionSide', i, 'both') as string;
 						const clientOrderId = this.getNodeParameter('clientOrderId', i, '') as string;
 
 						const body: any = {
 							contract_code: contractCode,
-							direction,
-							offset,
-							order_price_type: orderPriceType,
-							volume,
-							lever_rate: leverageRate,
+							margin_mode: marginMode,
+							position_side: positionSide,
+							side: side,
+							type: type,
+							volume: String(volume),
 						};
 
-						if (price && (orderPriceType === 'limit' || orderPriceType === 'post_only')) {
-							body.price = price;
+						if (price && (type === 'limit' || type === 'post_only')) {
+							body.price = String(price);
 						}
 
 						if (clientOrderId) {
@@ -811,7 +874,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
-							'/sapi/v1/order',
+							'/sapi/v1/trade/order',
 							body,
 						);
 					} else if (operation === 'placeMultipleOrders') {
@@ -831,36 +894,37 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
-							'/sapi/v1/order/batch',
-							{ orders_data: orders },
+							'/sapi/v1/trade/batch_orders',
+							orders,
 						);
 					} else if (operation === 'cancelOrder') {
 						const orderId = this.getNodeParameter('orderId', i) as string;
-						const contractCode = this.getNodeParameter('contractCode', i, '') as string;
+						const contractCode = this.getNodeParameter('contractCode', i) as string;
 
 						const body: any = {
+							contract_code: contractCode,
 							order_id: orderId,
 						};
-
-						if (contractCode) {
-							body.contract_code = contractCode;
-						}
 
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
-							'/sapi/v1/order/cancel',
+							'/sapi/v1/trade/cancel_order',
 							body,
 						);
 					} else if (operation === 'cancelMultipleOrders') {
 						const orderIdsString = this.getNodeParameter('orderIds', i) as string;
+						const contractCode = this.getNodeParameter('contractCode', i) as string;
 						const orderIds = orderIdsString.split(',').map((id) => id.trim());
 
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
-							'/sapi/v1/order/cancel',
-							{ order_id: orderIds.join(',') },
+							'/sapi/v1/trade/cancel_batch_orders',
+							{
+								contract_code: contractCode,
+								order_id: orderIds,
+							},
 						);
 					} else if (operation === 'cancelAllOrders') {
 						const contractCode = this.getNodeParameter('contractCode', i, '') as string;
@@ -873,30 +937,30 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
-							'/sapi/v1/order/cancelall',
+							'/sapi/v1/trade/cancel_all_orders',
 							body,
 						);
 					} else if (operation === 'closeSymbolAtMarket') {
 						const contractCode = this.getNodeParameter('contractCode', i) as string;
-						const direction = this.getNodeParameter('direction', i, 'buy') as string;
+						const marginMode = this.getNodeParameter('marginMode', i, 'cross') as string;
+						const positionSide = this.getNodeParameter('positionSide', i, 'both') as string;
 
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
-							'/sapi/v1/order/close_position',
+							'/sapi/v1/trade/position',
 							{
 								contract_code: contractCode,
-								direction,
+								margin_mode: marginMode,
+								position_side: positionSide,
 							},
 						);
 					} else if (operation === 'closeAllAtMarket') {
-						const direction = this.getNodeParameter('direction', i, 'buy') as string;
-
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
-							'/sapi/v1/order/close_all_position',
-							{ direction },
+							'/sapi/v1/trade/position_all',
+							{},
 						);
 					} else if (operation === 'getCurrentOrders') {
 						const qs: any = {};
@@ -907,7 +971,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/order/openorders',
+							'/sapi/v1/trade/order/opens',
 							undefined,
 							qs,
 						);
@@ -924,24 +988,23 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/order/hisorders',
+							'/sapi/v1/trade/order/history',
 							undefined,
 							qs,
 						);
 					} else if (operation === 'getOrderInfo') {
 						const orderId = this.getNodeParameter('orderId', i) as string;
-						const contractCode = this.getNodeParameter('contractCode', i, '') as string;
+						const contractCode = this.getNodeParameter('contractCode', i) as string;
 
 						const qs: any = {
+							contract_code: contractCode,
 							order_id: orderId,
 						};
-
-						if (contractCode) qs.contract_code = contractCode;
 
 						responseData = await sunxApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/order/info',
+							'/sapi/v1/trade/order',
 							undefined,
 							qs,
 						);
@@ -949,6 +1012,8 @@ export class SunxPerps implements INodeType {
 				}
 
 				// POSITION OPERATIONS
+				// Get Current Position uses /sapi/v1/trade/position/opens
+				// All other position operations use /sapi/v1/position/*
 				else if (resource === 'position') {
 					if (operation === 'getCurrentPosition') {
 						const qs: any = {};
@@ -959,7 +1024,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/position/info',
+							'/sapi/v1/trade/position/opens',
 							undefined,
 							qs,
 						);
@@ -970,7 +1035,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
-							'/sapi/v1/position/switch_lever_rate',
+							'/sapi/v1/position/lever',
 							{
 								contract_code: contractCode,
 								lever_rate: leverageRate,
@@ -980,7 +1045,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/position/position_mode',
+							'/sapi/v1/position/mode',
 						);
 					} else if (operation === 'setPositionMode') {
 						const positionMode = this.getNodeParameter('positionMode', i) as string;
@@ -988,7 +1053,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
-							'/sapi/v1/position/switch_position_mode',
+							'/sapi/v1/position/mode',
 							{
 								position_mode: positionMode,
 							},
