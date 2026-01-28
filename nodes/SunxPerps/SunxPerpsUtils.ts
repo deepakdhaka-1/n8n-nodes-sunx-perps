@@ -1,5 +1,5 @@
-import { IExecuteFunctions, IHttpRequestOptions } from 'n8n-workflow';
-import * as CryptoJS from 'crypto-js';
+import { IExecuteFunctions, IHttpRequestOptions, IHttpRequestMethods } from 'n8n-workflow';
+import CryptoJS from 'crypto-js';
 
 export interface SunxCredentials {
 	accessKeyId: string;
@@ -44,7 +44,7 @@ export function generateSignature(
 export function buildAuthenticatedRequest(
 	this: IExecuteFunctions,
 	credentials: SunxCredentials,
-	method: string,
+	method: IHttpRequestMethods,
 	endpoint: string,
 	body?: any,
 	qs?: any,
@@ -89,7 +89,7 @@ export function buildAuthenticatedRequest(
  */
 export async function sunxApiRequest(
 	this: IExecuteFunctions,
-	method: string,
+	method: IHttpRequestMethods,
 	endpoint: string,
 	body?: any,
 	qs?: any,
@@ -123,7 +123,7 @@ export async function sunxApiRequest(
  */
 export async function sunxPublicApiRequest(
 	this: IExecuteFunctions,
-	method: string,
+	method: IHttpRequestMethods,
 	endpoint: string,
 	qs?: any,
 ): Promise<any> {
