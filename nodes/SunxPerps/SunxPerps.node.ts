@@ -1004,8 +1004,9 @@ export class SunxPerps implements INodeType {
 				returnData.push(...executionData);
 			} catch (error) {
 				if (this.continueOnFail()) {
+					const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 					const executionErrorData = this.helpers.constructExecutionMetaData(
-						this.helpers.returnJsonArray({ error: error.message }),
+						this.helpers.returnJsonArray({ error: errorMessage }),
 						{ itemData: { item: i } },
 					);
 					returnData.push(...executionErrorData);
