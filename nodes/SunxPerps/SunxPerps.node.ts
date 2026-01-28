@@ -303,7 +303,7 @@ export class SunxPerps implements INodeType {
 			},
 			{
 				displayName: 'Side',
-				name: 'direction',
+				name: 'side',
 				type: 'options',
 				required: true,
 				displayOptions: {
@@ -673,6 +673,30 @@ export class SunxPerps implements INodeType {
 				description: 'Leverage rate to set',
 			},
 			{
+				displayName: 'Margin Mode',
+				name: 'marginMode',
+				type: 'options',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['position'],
+						operation: ['setLeverage'],
+					},
+				},
+				options: [
+					{
+						name: 'Cross',
+						value: 'cross',
+					},
+					{
+						name: 'Isolated',
+						value: 'isolated',
+					},
+				],
+				default: 'cross',
+				description: 'Margin mode',
+			},
+			{
 				displayName: 'Position Mode',
 				name: 'positionMode',
 				type: 'options',
@@ -710,6 +734,20 @@ export class SunxPerps implements INodeType {
 				},
 				default: '',
 				description: 'Contract code (optional)',
+			},
+			{
+				displayName: 'Margin Account',
+				name: 'marginAccount',
+				type: 'string',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['account'],
+						operation: ['getTradingBills'],
+					},
+				},
+				default: 'USDT',
+				description: 'Margin account (e.g., USDT, BTC-USDT)',
 			},
 			{
 				displayName: 'Type',
@@ -768,19 +806,20 @@ export class SunxPerps implements INodeType {
 							'/sapi/v1/account/balance',
 						);
 					} else if (operation === 'getTradingBills') {
-						const qs: any = {};
+						const body: any = {};
 						const contractCode = this.getNodeParameter('contractCode', i, '') as string;
+						const marginAccount = this.getNodeParameter('marginAccount', i) as string;
 						const type = this.getNodeParameter('type', i, '') as string;
 
-						if (contractCode) qs.contract_code = contractCode;
-						if (type) qs.type = type;
+						body.mar_acct = marginAccount;
+						if (contractCode) body.contract = contractCode;
+						if (type) body.type = type;
 
 						responseData = await sunxApiRequest.call(
 							this,
-							'GET',
-							'/sapi/v1/trade/account/financial_record',
-							undefined,
-							qs,
+							'POST',
+							'/sapi/v1/account/bill_record',
+							body,
 						);
 					}
 				}
@@ -977,13 +1016,15 @@ export class SunxPerps implements INodeType {
 						);
 					} else if (operation === 'getOrderHistory') {
 						const qs: any = {};
-						const contractCode = this.getNodeParameter('contractCode', i, '') as string;
+						const contractCode = this.getNodeParameter('contractCode', i) as string;
+						const marginMode = this.getNodeParameter('marginMode', i) as string;
 						const pageIndex = this.getNodeParameter('pageIndex', i, 1) as number;
 						const pageSize = this.getNodeParameter('pageSize', i, 20) as number;
 
-						if (contractCode) qs.contract_code = contractCode;
-						qs.page_index = pageIndex;
-						qs.page_size = pageSize;
+						qs.contract_code = contractCode;
+						qs.margin_mode = marginMode;
+						qs.from = pageIndex;
+						qs.limit = pageSize;
 
 						responseData = await sunxApiRequest.call(
 							this,
@@ -1031,6 +1072,7 @@ export class SunxPerps implements INodeType {
 					} else if (operation === 'setLeverage') {
 						const contractCode = this.getNodeParameter('contractCode', i) as string;
 						const leverageRate = this.getNodeParameter('leverageRate', i) as number;
+						const marginMode = this.getNodeParameter('marginMode', i) as string;
 
 						responseData = await sunxApiRequest.call(
 							this,
@@ -1039,6 +1081,7 @@ export class SunxPerps implements INodeType {
 							{
 								contract_code: contractCode,
 								lever_rate: leverageRate,
+								margin_mode: marginMode,
 							},
 						);
 					} else if (operation === 'getPositionMode') {
