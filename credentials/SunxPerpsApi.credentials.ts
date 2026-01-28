@@ -1,6 +1,5 @@
 import {
 	IAuthenticateGeneric,
-	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -8,7 +7,7 @@ import {
 export class SunxPerpsApi implements ICredentialType {
 	name = 'sunxPerpsApi';
 	displayName = 'SunX Perps API';
-	documentationUrl = 'https://docs.sunx.io';
+	documentationUrl = 'https://sunx.gitbook.io/sunx/developer/';
 	properties: INodeProperties[] = [
 		{
 			displayName: 'Access Key ID',
@@ -44,11 +43,6 @@ export class SunxPerpsApi implements ICredentialType {
 		properties: {},
 	};
 
-	test: ICredentialTestRequest = {
-		request: {
-			baseURL: '={{$credentials.baseUrl}}',
-			url: '/sapi/v1/account/balance',
-			method: 'GET',
-		},
-	};
+	// Remove automatic test - credentials will be verified when first used
+	// SunX API requires HMAC signature which is complex to test directly
 }
