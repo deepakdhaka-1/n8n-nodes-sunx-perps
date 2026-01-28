@@ -8,8 +8,7 @@ export interface SunxCredentials {
 }
 
 /**
- * Format timestamp as YYYY-MM-DDThh:mm:ss (without milliseconds or Z)
- * Then URL encode it
+ * Format timestamp as YYYY-MM-DDThh:mm:ss
  */
 function getTimestamp(): string {
 	const now = new Date();
@@ -20,13 +19,11 @@ function getTimestamp(): string {
 	const minutes = String(now.getUTCMinutes()).padStart(2, '0');
 	const seconds = String(now.getUTCSeconds()).padStart(2, '0');
 	
-	// Format: YYYY-MM-DDThh:mm:ss (not URL encoded yet)
 	return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }
 
 /**
- * URL encode with uppercase hex characters as per SunX requirements
- * : becomes %3A, space becomes %20, etc.
+ * URL encode with uppercase hex
  */
 function urlEncodeValue(str: string): string {
 	return encodeURIComponent(str)
@@ -39,14 +36,6 @@ function urlEncodeValue(str: string): string {
 
 /**
  * Generate HMAC SHA256 signature for SunX API
- * 
- * String to sign format:
- * METHOD\n
- * HOST\n
- * PATH\n
- * QUERY_STRING
- * 
- * Where QUERY_STRING is sorted by ASCII order and URL encoded
  */
 export function generateSignature(
 	method: string,
@@ -55,21 +44,19 @@ export function generateSignature(
 	params: { [key: string]: any },
 	secretKey: string,
 ): string {
-	// Sort parameters by key in ASCII order
+	// Sort parameters by key
 	const sortedKeys = Object.keys(params).sort();
 	
 	// Build query string with URL-encoded values
 	const queryParts: string[] = [];
 	for (const key of sortedKeys) {
 		const value = String(params[key]);
-		// URL encode the value (key is not encoded)
 		const encodedValue = urlEncodeValue(value);
 		queryParts.push(`${key}=${encodedValue}`);
 	}
 	const queryString = queryParts.join('&');
 
-	// Build string to sign
-	// Format: METHOD\nHOST\nPATH\nQUERY_STRING
+	// Build string to sign: METHOD\nHOST\nPATH\nQUERY_STRING
 	const stringToSign = `${method}\n${host}\n${path}\n${queryString}`;
 
 	// Generate HMAC-SHA256 signature
@@ -80,7 +67,7 @@ export function generateSignature(
 }
 
 /**
- * Build authenticated request options for SunX API
+ * Build authenticated request
  */
 export function buildAuthenticatedRequest(
 	this: IExecuteFunctions,
@@ -90,23 +77,23 @@ export function buildAuthenticatedRequest(
 	body?: any,
 	additionalQs?: any,
 ): IHttpRequestOptions {
-	// Get timestamp in format YYYY-MM-DDThh:mm:ss
 	const timestamp = getTimestamp();
 	
 	// Parse URL
-	const url = new URL(credentials.baseUrl + endpoint);
-	const host = url.hostname; // e.g., api.sunx.io
-	const path = url.pathname;  // e.g., /sapi/v1/account/balance
+	const fullUrl = credentials.baseUrl + endpoint;
+	const url = new URL(fullUrl);
+	const host = url.hostname;
+	const path = url.pathname;
 
-	// Build parameters object (before URL encoding for signature)
+	// Build parameters for signature
 	const params: { [key: string]: string } = {
 		AccessKeyId: credentials.accessKeyId,
 		SignatureMethod: 'HmacSHA256',
 		SignatureVersion: '2',
-		Timestamp: timestamp, // Not URL encoded yet
+		Timestamp: timestamp,
 	};
 
-	// Add any additional query parameters
+	// Add additional query params if any
 	if (additionalQs) {
 		for (const key in additionalQs) {
 			if (additionalQs[key] !== undefined && additionalQs[key] !== null && additionalQs[key] !== '') {
@@ -117,27 +104,18 @@ export function buildAuthenticatedRequest(
 
 	// Generate signature
 	const signature = generateSignature(method, host, path, params, credentials.secretKey);
-	
-	// Add signature to params
 	params.Signature = signature;
 
-	// Build query string for the actual request (with URL encoding)
-	const finalQs: { [key: string]: string } = {};
-	for (const key in params) {
-		finalQs[key] = params[key];
-	}
-
-	// Build request options
+	// Build request
 	const options: IHttpRequestOptions = {
 		method,
-		baseURL: credentials.baseUrl,
-		url: path,
-		qs: finalQs,
+		url: fullUrl,
+		qs: params,
 		headers: {
 			'Content-Type': 'application/json',
 		},
 		json: true,
-		skipSslCertificateValidation: true, // Ignore SSL errors
+		skipSslCertificateValidation: true,
 	};
 
 	// Add body for POST/PUT
@@ -149,7 +127,7 @@ export function buildAuthenticatedRequest(
 }
 
 /**
- * Helper to make authenticated API request
+ * Make authenticated API request
  */
 export async function sunxApiRequest(
 	this: IExecuteFunctions,
@@ -182,7 +160,7 @@ export async function sunxApiRequest(
 }
 
 /**
- * Helper for public API requests (no authentication needed)
+ * Make public API request (no auth)
  */
 export async function sunxPublicApiRequest(
 	this: IExecuteFunctions,
@@ -201,7 +179,7 @@ export async function sunxPublicApiRequest(
 			'Content-Type': 'application/json',
 		},
 		json: true,
-		skipSslCertificateValidation: true, // Ignore SSL errors
+		skipSslCertificateValidation: true,
 	};
 
 	try {
