@@ -303,7 +303,7 @@ export class SunxPerps implements INodeType {
 			},
 			{
 				displayName: 'Side',
-				name: 'side',
+				name: 'direction',
 				type: 'options',
 				required: true,
 				displayOptions: {
