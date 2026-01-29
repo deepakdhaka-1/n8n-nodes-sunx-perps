@@ -608,14 +608,46 @@ export class SunxPerps implements INodeType {
 				displayName: 'Contract Code',
 				name: 'contractCode',
 				type: 'string',
+				required: true,
 				displayOptions: {
 					show: {
 						resource: ['order'],
-						operation: ['getCurrentOrders', 'getOrderHistory', 'getOrderInfo'],
+						operation: ['getOrderHistory'],
+					},
+				},
+				default: 'BTC-USDT',
+				description: 'Contract code (required)',
+			},
+			{
+				displayName: 'Margin Mode',
+				name: 'marginMode',
+				type: 'options',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['order'],
+						operation: ['getOrderHistory'],
+					},
+				},
+				options: [
+					{ name: 'Cross', value: 'cross' },
+					{ name: 'Isolated', value: 'isolated' },
+				],
+				default: 'cross',
+				description: 'Margin mode (required)',
+			},
+			{
+				displayName: 'Contract Code',
+				name: 'contractCode',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['order'],
+						operation: ['getCurrentOrders', 'getOrderInfo'],
 					},
 				},
 				default: '',
-				description: 'Contract code (optional for list, required for getOrderInfo)',
+				description: 'Contract code (optional for getCurrentOrders, required for getOrderInfo)',
 			},
 			{
 				displayName: 'Page Index',
@@ -853,7 +885,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxPublicApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/trade/historical_funding_rate',
+							'/sapi/v1/public/funding_rate_history',
 							{ contract_code: contractCode },
 						);
 					} else if (operation === 'getLeverageInfo') {
@@ -868,7 +900,7 @@ export class SunxPerps implements INodeType {
 						responseData = await sunxPublicApiRequest.call(
 							this,
 							'GET',
-							'/sapi/v1/trade/cross_transfer_info',
+							'/sapi/v1/public/multi_assets_margin',
 						);
 					} else if (operation === 'getSwapIndexPrice') {
 						const contractCode = this.getNodeParameter('contractCode', i) as string;
@@ -910,6 +942,41 @@ export class SunxPerps implements INodeType {
 							body.client_order_id = clientOrderId;
 						}
 
+
+						// Add TP/SL parameters
+						const tpslOptions = this.getNodeParameter('tpslOptions', i, {}) as any;
+						if (tpslOptions.tpTriggerPrice) {
+							body.tp_trigger_price = tpslOptions.tpTriggerPrice;
+							if (tpslOptions.tpOrderPrice) body.tp_order_price = tpslOptions.tpOrderPrice;
+							if (tpslOptions.tpType) body.tp_type = tpslOptions.tpType;
+							if (tpslOptions.tpTriggerPriceType) body.tp_trigger_price_type = tpslOptions.tpTriggerPriceType;
+						}
+						
+						if (tpslOptions.slTriggerPrice) {
+							body.sl_trigger_price = tpslOptions.slTriggerPrice;
+							if (tpslOptions.slOrderPrice) body.sl_order_price = tpslOptions.slOrderPrice;
+							if (tpslOptions.slType) body.sl_type = tpslOptions.slType;
+							if (tpslOptions.slTriggerPriceType) body.sl_trigger_price_type = tpslOptions.slTriggerPriceType;
+						}
+						
+						if (tpslOptions.priceProtect !== undefined) {
+							body.price_protect = tpslOptions.priceProtect ? 'true' : 'false';
+						}
+
+						// Add additional options
+						const additionalOptions = this.getNodeParameter('additionalOrderOptions', i, {}) as any;
+						if (additionalOptions.reduceOnly !== undefined) {
+							body.reduce_only = additionalOptions.reduceOnly ? 1 : 0;
+						}
+						if (additionalOptions.timeInForce) {
+							body.time_in_force = additionalOptions.timeInForce;
+						}
+						if (additionalOptions.priceMatch) {
+							body.price_match = additionalOptions.priceMatch;
+						}
+						if (additionalOptions.selfMatchPrevent) {
+							body.self_match_prevent = additionalOptions.selfMatchPrevent;
+						}
 						responseData = await sunxApiRequest.call(
 							this,
 							'POST',
